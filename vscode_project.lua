@@ -61,7 +61,12 @@ function m.vscode_tasks(prj)
 		_p(1, '"tasks": [{')
 			_p(2, '"type": "shell",')
 			_p(2, '"label": "%s",', build_task_name)
-			_p(2, '"command": "clear && time make -r -j`nproc`",')
+	-- check if ninja is used, otherwise default to make.
+	if os.isfile(prj.location .. '/build.ninja') then
+			_p(2, '"command": "clear && time ninja -j$(nproc)",')
+	else
+			_p(2, '"command": "clear && time make %s -r -j$(nproc)",', prj.name)
+	end
 			_p(2, '"args": [],')
 			_p(2, '"options": {')
 				_p(3, '"cwd": "${workspaceFolder}/"')
@@ -148,12 +153,11 @@ function m.vscode_c_cpp_properties(prj)
 			_p(2, '],')
 			_p(2, '"defines": [')
 				if #cfg.defines > 0 then
-					_p(3, '"%s"', cfg.defines[1])
+					_p(3, '"%s"', cfg.defines[1]:gsub('"','\\"'))
 					for i = 2,#cfg.defines do
-						_p(3, ',"%s"', cfg.defines[i])
+						_p(3, ',"%s"', cfg.defines[i]:gsub('"','\\"'))
 					end
 				end
-				
 			_p(2, '],')
 			_p(2, '"compilerPath": "/usr/bin/g++",') --TODO premake toolset
 			if cfg.cdialect ~= nil then
